@@ -1,0 +1,70 @@
+{
+  "evidence_type": "LOCAL actual unittest and loopback HTTP delivery; not GitHub Actions evidence",
+  "suite_tests": 37,
+  "external_services_contacted": false,
+  "email_sent": false,
+  "defect_file": "validation.py (isolated project copy)",
+  "final_source_unchanged": true,
+  "cycles": [
+    {
+      "label": "pass-before",
+      "tests_exit_code": 0,
+      "delivery_exit_code": 0,
+      "summary": {
+        "total": 37,
+        "passed": 37,
+        "failed": 0,
+        "skipped": 0,
+        "status": "passed"
+      },
+      "generated_matches_received": true,
+      "metadata": {
+        "repository": null,
+        "branch": null,
+        "commit_sha": null,
+        "run_id": null,
+        "timestamp": "2026-10-30T06:41:42Z"
+      }
+    },
+    {
+      "label": "real-defect-fail",
+      "tests_exit_code": 1,
+      "delivery_exit_code": 0,
+      "summary": {
+        "total": 37,
+        "passed": 36,
+        "failed": 1,
+        "skipped": 0,
+        "status": "failed"
+      },
+      "generated_matches_received": true,
+      "metadata": {
+        "repository": null,
+        "branch": null,
+        "commit_sha": null,
+        "run_id": null,
+        "timestamp": "2026-10-30T06:41:44Z"
+      }
+    },
+    {
+      "label": "fixed-pass",
+      "tests_exit_code": 0,
+      "delivery_exit_code": 0,
+      "summary": {
+        "total": 37,
+        "passed": 37,
+        "failed": 0,
+        "skipped": 0,
+        "status": "passed"
+      },
+      "generated_matches_received": true,
+      "metadata": {
+        "repository": null,
+        "branch": null,
+        "commit_sha": null,
+        "run_id": null,
+        "timestamp": "2026-10-30T06:41:47Z"
+      }
+    }
+  ]
+}

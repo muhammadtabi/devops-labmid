@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "repository": null,
+  "branch": null,
+  "commit_sha": null,
+  "run_id": null,
+  "timestamp": "2026-10-30T06:41:47Z",
+  "tests": [
+    {
+      "name": "test_email.EmailTests.test_email_contains_required_metadata_and_attaches_actual_json",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_email.EmailTests.test_missing_config_bad_ports_and_header_injection_are_rejected",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_email.EmailTests.test_ssl_port_465_without_actual_email",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_email.EmailTests.test_starttls_happens_before_login_without_actual_email",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_portal.PortalTests.test_each_required_field_rejects_missing_blank_and_wrong_types",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_portal.PortalTests.test_http_https_localhost_ipv4_ipv6_and_idn_urls",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_portal.PortalTests.test_invalid_url_is_rejected",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_portal.PortalTests.test_literal_html_and_sql_text_round_trip_without_execution",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_portal.PortalTests.test_malformed_non_object_and_wrong_content_type_requests",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_portal.PortalTests.test_missing_registration_number_is_rejected",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_portal.PortalTests.test_multiple_submissions_order_and_trim",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_portal.PortalTests.test_only_allowlisted_assets_and_server_mode_are_served",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_portal.PortalTests.test_oversize_and_field_length_requests_are_rejected",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_portal.PortalTests.test_persistence_after_server_restart_and_database_creation",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_portal.PortalTests.test_valid_submission_saves_and_lists",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_receiver.ReceiverTests.test_accepts_passing_and_failing_reports_with_atomic_replace",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_receiver.ReceiverTests.test_atomic_writer_preserves_existing_on_validation_error",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_receiver.ReceiverTests.test_default_receiver_output_is_startup_directory",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_receiver.ReceiverTests.test_delivery_errors_are_not_swallowed",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_receiver.ReceiverTests.test_health_does_not_require_or_expose_secret",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_receiver.ReceiverTests.test_inconsistent_reports_cannot_overwrite_previous_report",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_receiver.ReceiverTests.test_malformed_and_oversized_receiver_requests",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_receiver.ReceiverTests.test_missing_wrong_and_duplicate_auth_do_not_overwrite",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_receiver.ReceiverTests.test_send_script_delivers_actual_pass_and_fail",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_receiver.ReceiverTests.test_token_required_at_startup",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_runner.DefectScriptTests.test_exact_target_is_changed_and_restored_without_touching_other_code",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_runner.DefectScriptTests.test_refuses_unrelated_edits_to_marked_function",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_runner.RunnerTests.test_class_setup_errors_are_not_lost",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_runner.RunnerTests.test_default_report_path_is_repo_root_not_current_directory",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_runner.RunnerTests.test_expected_failure_and_unexpected_success",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_runner.RunnerTests.test_failure_error_and_skip_are_reported_and_return_nonzero",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_runner.RunnerTests.test_github_metadata_uses_full_actual_environment_values",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_runner.RunnerTests.test_import_error_produces_report_and_failure",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_runner.RunnerTests.test_missing_metadata_is_null_and_git_fallback_is_real",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_runner.RunnerTests.test_no_tests_is_not_false_success",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_runner.RunnerTests.test_passing_fixture_returns_zero_and_real_names",
+      "result": "passed",
+      "failure_message": ""
+    },
+    {
+      "name": "test_runner.RunnerTests.test_subtest_failures_change_parent_result",
+      "result": "passed",
+      "failure_message": ""
+    }
+  ],
+  "summary": {
+    "total": 37,
+    "passed": 37,
+    "failed": 0,
+    "skipped": 0,
+    "status": "passed"
+  }
+}

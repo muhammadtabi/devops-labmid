@@ -1,0 +1,70 @@
+# Use ONLY a private/trusted repository with this persistent self-hosted runner.
+# Do not add pull_request: untrusted code could read runner secrets and local files.
+name: Assignment portal lab
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# No cancel-in-progress concurrency: every push must get its own report.
+jobs:
+  tests:
+    runs-on: [self-hosted, labmid]
+    env:
+      REPORT_TOKEN: ${{ secrets.LOCAL_REPORT_TOKEN }}
+      REPORT_RECEIVER_URL: http://127.0.0.1:9000/report
+      SMTP_HOST: ${{ secrets.SMTP_HOST }}
+      SMTP_PORT: ${{ secrets.SMTP_PORT }}
+      SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+      SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+      SMTP_FROM: ${{ secrets.SMTP_FROM }}
+      SMTP_TO: ${{ secrets.SMTP_TO }}
+    steps:
+      - name: Check out this push
+        uses: actions/checkout@v4
+      - name: Run real tests and generate JSON report
+        # Python 3.10+ is preinstalled on the LOCAL runner; no pip dependencies.
+        # Receiver must already be running on this same machine in a separate directory.
+        run: python3 scripts/run_tests.py
+      - name: Deliver report for passing AND failing tests
+        if: ${{ always() }}
+        run: python3 scripts/send_report.py
+      - name: Preserve actual JSON report
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: test-report.json
+          if-no-files-found: error
+      - name: Optionally email actual test report
+        if: ${{ always() && env.SMTP_HOST != '' && env.SMTP_USERNAME != '' && env.SMTP_PASSWORD != '' && env.SMTP_FROM != '' && env.SMTP_TO != '' }}
+        run: python3 scripts/email_report.py
+
+  pages:
+    # Opt-in only: enable Pages in repository settings AND ENABLE_PAGES=true.
+    # This is explicitly a browser-local static demo, NOT the SQLite portal.
+    needs: tests
+    if: ${{ success() && vars.ENABLE_PAGES == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out static demo
+        uses: actions/checkout@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload static browser-local demo
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: static
+      - name: Deploy static browser-local demo
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -29,7 +29,7 @@ In the commands below, replace `/absolute/path/assignment-portal` with the actua
 | Test output | Actual `test-report.json`; a failed test makes the command exit unsuccessfully |
 | Local report receiver | `receiver.py`, port 9000, `POST /report`, `GET /health` |
 | Report sender | `python3 scripts/send_report.py` |
-| CI machine | Local self-hosted GitHub Actions runner, named and labelled `labmid`, with `python3` installed |
+| CI machine | GitHub-hosted Ubuntu runner with Python configured by `actions/setup-python` |
 | Optional Pages demo | Static frontend using browser `localStorage`, not the Python/SQLite backend |
 
 There is no need for Docker, Jenkins, Terraform, or a package installation step. The main portal uses SQLite. The optional Pages demo has a different, clearly labelled browser-local storage mode.
@@ -113,21 +113,11 @@ The receiver should replace that file atomically: write a complete new file, the
 
 Check `http://127.0.0.1:9000/health`. A healthy receiver only proves that the service is up; it does not prove a report was delivered.
 
-### Terminal C: self-hosted runner
+## 6. Why the tunnel is required
 
-Follow GitHub's repository runner registration instructions from the README. Name the runner `labmid` and add the custom label `labmid`. A display name alone does not select a runner; the workflow must target its labels, including `self-hosted` and `labmid`.
-
-Run it on the **same machine** as the receiver, with Python 3.10+ available as `python3`. Keep both the runner and receiver running for all three demo pushes.
-
-Use only a private, trusted repository. Do not allow forks or untrusted contributors to execute code on this runner. The required workflow triggers on **every push**, not `pull_request`.
-
-## 6. Why localhost needs the right runner
-
-`127.0.0.1` means “this machine.” For a GitHub-hosted runner, it means GitHub's machine, not your laptop. That runner cannot reach your local receiver through your laptop's loopback address.
-
-The chosen solution is a local self-hosted runner on the receiver's machine. Its sender can reach `http://127.0.0.1:9000/report` directly. No container is used, so there is no separate container loopback address to handle.
-
-A tunnel is an alternative if a remote runner is used, but it needs external configuration and authentication. It is not necessary for this project. If used, configure `REPORT_RECEIVER_URL` to the reachable `/report` address; never expose an unauthenticated receiver.
+`127.0.0.1` means “this machine.” For a GitHub-hosted runner, it means GitHub's machine,
+not your laptop. Configure the `REPORT_RECEIVER_URL` GitHub secret with an authenticated
+tunnel URL forwarding to the receiver's local `127.0.0.1:9000`.
 
 ## 7. How actual results reach the receiver
 
@@ -203,7 +193,7 @@ Configure the repository secret **`LOCAL_REPORT_TOKEN`** to the same value enter
 
 For every push, the workflow must:
 
-1. Select the trusted local self-hosted runner and check out that push's revision.
+1. Select a GitHub-hosted Ubuntu runner and check out that push's revision.
 2. Run `python3 scripts/run_tests.py` using the installed Python.
 3. Preserve the test command's exit status: failure means a failed test step/job.
 4. Run the report sender with `always()` after the test step, so a failed test does not skip delivery.
@@ -237,7 +227,7 @@ Commit and push the repair. Show the newly passing run and new receiver report. 
 
 Pages is **opt-in**: set the repository variable `ENABLE_PAGES=true` only if attempting this bonus. Leave it unset/false for core-only work, so Pages availability cannot block core tests/report delivery.
 
-A private repository on a free GitHub plan may not support Pages. Keep the core repository private and trusted; use an eligible plan or skip this bonus rather than exposing a self-hosted runner to untrusted public code.
+A private repository on a free GitHub plan may not support Pages. Use an eligible plan or skip this bonus.
 
 Deploy only from `main`, and only after the tests/report job for the **same revision** succeeds. Do not deploy on a feature branch or after failed tests/report delivery. A failed revision must leave the previously published version unchanged.
 

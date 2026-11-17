@@ -16,11 +16,10 @@ Complete repository initialization and GitHub settings **first**, following the 
 - [ ] Python 3.10+ is installed as `python3`; no third-party dependencies are needed.
 - [ ] Repository contains the app, tests, CI workflow, receiver, and README.
 - [ ] Git is initialized; your identity is configured; `origin` points to your GitHub repository; the local `main` branch exists.
-- [ ] Repository is private and trusted, with no forks or untrusted contributors using this runner.
+- [ ] `REPORT_RECEIVER_URL` points to an authenticated tunnel or relay forwarding to the local receiver.
 - [ ] Workflow triggers on every push and has no `pull_request` trigger.
-- [ ] A local self-hosted runner is registered, named and labelled `labmid`, and selected by the workflow's `self-hosted` and `labmid` labels.
-- [ ] The runner has `python3` installed and is on the same machine as the receiver.
-- [ ] GitHub secret `LOCAL_REPORT_TOKEN` matches the receiver's required `REPORT_TOKEN`.
+- [ ] GitHub-hosted Ubuntu jobs can reach the tunnel; the receiver and tunnel remain running.
+- [ ] GitHub secrets `LOCAL_REPORT_TOKEN` and `REPORT_RECEIVER_URL` are configured.
 - [ ] Sender and artifact steps use `always()` after tests. Tests are not made green using `continue-on-error` or `|| true`.
 - [ ] Secret values, `data/submissions.db`, and generated reports are excluded from commits as described in the README. Review the actual ignore configuration before staging.
 - [ ] If attempting Pages, repository variable `ENABLE_PAGES=true` and Pages settings are configured; deployment requires `main` and successful same-revision tests/report delivery.
@@ -41,7 +40,7 @@ export REPORT_TOKEN
 python3 /absolute/path/assignment-portal/receiver.py
 ```
 
-Keep this terminal and the registered runner running through all three pushes. Check `http://127.0.0.1:9000/health`.
+Keep this terminal and the tunnel running through all three pushes. Check `http://127.0.0.1:9000/health`.
 
 The default received file is `$HOME/labmid-reports/test-report.json`. Starting the receiver outside the checkout prevents GitHub checkout cleanup from deleting the instructor's record. Do not use the runner workspace as the receiver's storage directory.
 

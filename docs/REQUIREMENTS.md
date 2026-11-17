@@ -9,7 +9,7 @@
 This matrix maps the exact requirements to the supplied implementation. Local verification is recorded in `LOCAL_VERIFICATION.md`; it does not replace the required GitHub demonstration.
 
 - **Locally implemented:** server-side validation and SQLite API, frontend, real unittest reporting, receiver, sender, defect toggle, and workflow. Use the local verification record for observed execution results.
-- **External configuration required:** GitHub repository settings, a registered runner, secrets, and a continuously running receiver must be configured by the owner.
+- **External configuration required:** GitHub repository secrets, an authenticated tunnel, and a continuously running receiver must be configured by the owner.
 - **External proof — not performed on your behalf:** GitHub push runs, automatic CI-to-local report delivery, Pages publishing, and email receipt require your own evidence.
 - **Documentation completed:** these guides explain the contract and supply blank GitHub evidence records. They complement, not replace, the application's README.
 
@@ -82,7 +82,9 @@ Errors have `result: "error"` and are included in `summary.failed`. Skips have `
 
 ### Pages plan and security boundary
 
-The core setup recommends a **private, trusted repository** because a self-hosted runner executes repository code on the local machine. GitHub Pages for a private repository may not be available on a free plan. Leave `ENABLE_PAGES` unset/false if not attempting Pages; core tests/report delivery must not depend on Pages being available. Use an eligible plan or skip the optional bonus rather than making this self-hosted setup public to untrusted code.
+The core workflow uses GitHub-hosted runners. The local receiver remains protected by its
+token and is reached through the configured tunnel URL. GitHub Pages for a private repository
+may not be available on a free plan. Leave `ENABLE_PAGES` unset/false if not attempting Pages.
 
 Pages serves static files only. It cannot run the local HTTP server or host `data/submissions.db`. The browser-local demo must be visibly distinguished from the shared local server workflow. Passing backend tests are not a claim that every behavior of this separate static mode was tested.
 
@@ -102,12 +104,13 @@ For SMTP, normally use port 587 with STARTTLS or port 465 with implicit TLS, as 
 | Sender destination | `REPORT_RECEIVER_URL` defaults to `http://127.0.0.1:9000/report` |
 | Receiver command | Set required `REPORT_TOKEN`; start `python3 receiver.py` through its absolute path from the separate reports directory |
 | Default received report | `$HOME/labmid-reports/test-report.json` when started there |
-| Runner | Named and labelled `labmid`; selected by `self-hosted` and `labmid` labels; installed `python3`; same machine as receiver |
+| Runner | GitHub-hosted Ubuntu runner with Python configured by `actions/setup-python` |
 | Trigger and trust | Every push; private trusted repository; no forks/untrusted contributors; no `pull_request` trigger |
 | Failure follow-up | Sender and report artifact use `always()`; test step still fails |
 | Defect commands | `python3 scripts/demo_defect.py introduce` and `python3 scripts/demo_defect.py fix` |
 
-Localhost on a GitHub-hosted runner refers to the remote runner, not the student's machine. The chosen local self-hosted runner avoids that mismatch without containers. A secured tunnel is an alternative requiring configuration of the receiver URL, not a dependency of this project.
+Localhost on a GitHub-hosted runner refers to the remote runner, not the student's machine.
+The secured tunnel and `REPORT_RECEIVER_URL` secret bridge that network boundary.
 
 ## 6. Submission and honest completion record
 

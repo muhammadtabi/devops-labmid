@@ -8,7 +8,7 @@ These answers explain the project contract and implementation. Local verificatio
 
 ## A 60-second explanation
 
-> My project is an assignment submission portal using Python 3.10 or newer and only the standard library. Students enter their name, registration number, assignment title, and submission URL. The local server validates the values, saves accepted submissions in SQLite, and shows a list; it does not upload files. Every GitHub push runs real unittest tests on a trusted local self-hosted runner. The tests cover a valid saved submission, missing registration, and an invalid URL. The runner writes actual results to a JSON report and exits unsuccessfully if tests fail. An always-run sender posts the report to a token-protected receiver on the same machine. I demonstrate a passing push, a real URL-validation defect, and a repair, matching each report to its commit SHA and run ID. Pages and pass/fail email are optional bonuses, not part of the core portal.
+> My project is an assignment submission portal using Python 3.10 or newer and only the standard library. Students enter their name, registration number, assignment title, and submission URL. The local server validates the values, saves accepted submissions in SQLite, and shows a list; it does not upload files. Every GitHub push runs real unittest tests on a GitHub-hosted Ubuntu runner. The tests cover a valid saved submission, missing registration, and an invalid URL. The runner writes actual results to a JSON report and exits unsuccessfully if tests fail. An always-run sender posts the report through an authenticated tunnel to the token-protected local receiver. I demonstrate a passing push, a real URL-validation defect, and a repair, matching each report to its commit SHA and run ID. Pages and pass/fail email are optional bonuses, not part of the core portal.
 
 Use this as an explanation of the design. Say “I demonstrated” only after you have the actual evidence.
 
@@ -64,19 +64,21 @@ A failure means an assertion was not satisfied. An error means a test could not 
 
 ### 12. When does the CI workflow run?
 
-On every push to the trusted repository. It must test branches as well as `main`; only the optional deployment is restricted to `main`. There is no `pull_request` trigger for this local self-hosted setup.
+On every push to the repository. It tests branches as well as `main`; there is no `pull_request` trigger.
 
-### 13. Why is the runner self-hosted and on the same machine?
+### 13. Why is the receiver reached through a tunnel?
 
 The receiver is local. A runner on that same machine can reach `http://127.0.0.1:9000/report`, and it already has Python installed.
 
 ### 14. Why will localhost not reach my laptop from a GitHub-hosted runner?
 
-Localhost means the machine making the request. On a GitHub-hosted runner, it points to GitHub's machine. Our local runner avoids that problem; a secured tunnel is an alternative, not a required tool here.
+Localhost means the machine making the request. On a GitHub-hosted runner, it points to GitHub's
+machine, so the authenticated tunnel forwards the report request to the local receiver.
 
-### 15. What does the `labmid` runner setting mean?
+### 15. What does `REPORT_RECEIVER_URL` mean?
 
-The runner is named and given the custom label `labmid`. The workflow selects labels such as `self-hosted` and `labmid`; the display name alone is not a scheduling label.
+GitHub-hosted runners cannot access my computer's `localhost`. The authenticated tunnel forwards
+the `REPORT_RECEIVER_URL` endpoint to the local receiver without removing token authentication.
 
 ### 16. How is the report receiver authenticated?
 
@@ -84,7 +86,10 @@ The runner is named and given the custom label `labmid`. The workflow selects la
 
 ### 17. Where does the receiver store its report, and why outside the checkout?
 
-By default, it saves `test-report.json` in its startup working directory. Start it in `$HOME/labmid-reports` using the absolute receiver script path. GitHub checkout cleanup could delete an untracked report inside the runner workspace. Atomic replacement prevents a partially written latest report.
+It is the authenticated tunnel URL ending in `/report`. The tunnel forwards the hosted runner's
+request to the receiver. The receiver saves `test-report.json` in its startup working directory;
+start it in `$HOME/labmid-reports` using the absolute receiver script path. Atomic replacement
+prevents a partially written latest report.
 
 ### 18. What must be included in the received JSON?
 
@@ -132,7 +137,7 @@ Submit the repository URL, README setup instructions, and actual pass/break/fix 
 | “Store the receiver report beside the runner checkout.” | Use a separate startup directory to survive checkout cleanup. |
 | “Pages has the same shared SQLite data.” | Pages uses a separate browser-local static demo. |
 | “A feature-branch pass can deploy `main`.” | Deployment requires `main` and successful checks of that same revision. |
-| “Any public self-hosted runner is safe.” | Use a private trusted repository; untrusted code can execute on the host. |
+| “The hosted runner can post to my localhost directly.” | Use `REPORT_RECEIVER_URL` through an authenticated tunnel. |
 | “SMTP secrets prove notification.” | Show actual received pass and fail messages. |
 | “Every report has these guessed JSON keys.” | Read the actual schema and values before explaining them. |
 

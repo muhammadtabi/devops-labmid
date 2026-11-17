@@ -47,4 +47,7 @@ The repository, branch, commit SHA and run ID are deliberately `null` in these l
 
 ## Not yet demonstrated
 
-Your account is still needed to create/push the GitHub repository, register the local runner, configure secrets, and collect the actual three GitHub run URLs and received reports. GitHub Pages deployment and received email are also not verified externally. Follow [DEMO_CHECKLIST.md](DEMO_CHECKLIST.md) for those assessed demonstrations.
+Your account is still needed to create/push the GitHub repository, start the receiver and tunnel,
+configure secrets, and collect the actual three GitHub run URLs and received reports. GitHub Pages
+deployment and received email are also not verified externally. Follow [DEMO_CHECKLIST.md](DEMO_CHECKLIST.md)
+for those assessed demonstrations.

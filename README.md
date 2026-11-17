@@ -13,7 +13,7 @@ A small assignment-submission portal with real automated tests, a GitHub Actions
 - SQLite persistence and a saved-submissions list. No file upload required.
 - Real Python `unittest` results in JSON; failed tests return a failing exit code.
 - Authenticated local report receiver, automatic delivery after passing **and failing** runs.
-- GitHub Actions on every push, using a runner on your own computer.
+- GitHub Actions on every push, using a GitHub-hosted runner and a secure tunnel to the local receiver.
 - Optional static GitHub Pages demo and SMTP email reports.
 
 **Only Python 3.10+ and Git are needed for the core project.** There is no Flask, npm build, Docker, cloud database, or Python package installation. This is a local educational application, not a production multi-user system.
@@ -110,31 +110,30 @@ git push -u origin main
 
 Use your own username. Configure Git name/email if Git asks. Authenticate using GitHub's supported credential mechanism; never put a personal access token in source files.
 
-An initial workflow may show **Queued** until you configure the local runner. The project has not been published to GitHub on your behalf; these steps require your account.
+The workflow requires the `LOCAL_REPORT_TOKEN` and `REPORT_RECEIVER_URL` secrets before report
+delivery can succeed. The project has not been published to GitHub on your behalf; these steps
+require your account.
 
-## 5. Configure the local GitHub Actions runner
+## 5. Configure GitHub Actions and the tunnel
 
-A runner is the worker that executes your pipeline. We deliberately use a worker on **the same computer as the receiver**.
+The workflow uses a GitHub-hosted Ubuntu runner, with separate `test-and-report` and
+`send-email` jobs. A hosted runner's `localhost` is not your computer, so the local
+receiver must be exposed through an authenticated tunnel or relay.
 
-1. In your repository, open **Settings → Actions → Runners → New self-hosted runner**.
-2. Choose your operating system and architecture. For the supplied workflow, Linux or macOS with Python 3.10+ is simplest. Windows users can use WSL with both runner and receiver in the same WSL environment.
-3. Follow GitHub's displayed download and configuration commands in a separate directory, such as `~/actions-runner`. Use the current commands provided by GitHub; its registration token expires.
-4. When configuration asks for additional labels, add **`labmid`**. The workflow matches `[self-hosted, labmid]`.
-5. Start the runner using the displayed command, usually `./run.sh`. Verify it appears **Idle** in repository settings.
-6. Confirm `python3 --version` works in the environment of the runner's user.
-7. In **Settings → Secrets and variables → Actions → Secrets**, add:
+1. Start the receiver from the separate reports directory described above.
+2. Start a tunnel provider of your choice and forward its HTTPS URL to `http://127.0.0.1:9000`.
+   Keep the tunnel running for every demonstration push. Do not expose the receiver without
+   its token check.
+3. In **Settings → Secrets and variables → Actions → Secrets**, add:
 
 | Secret | Value |
 |---|---|
 | `LOCAL_REPORT_TOKEN` | The same private value used by the receiver's `REPORT_TOKEN` |
+| `REPORT_RECEIVER_URL` | The tunnel's HTTPS `/report` URL |
 
-Keep the runner terminal and receiver terminal running. The portal terminal is needed to show the web app but is not required by the tests; tests launch isolated temporary app servers themselves.
-
-### Why not just a normal GitHub-hosted runner?
-
-`localhost` means **the computer executing the program**. On GitHub's hosted worker, `localhost:9000` points to GitHub's machine, not your laptop. On our self-hosted worker it points to your computer, so the local receiver is reachable without a public tunnel.
-
-Do not run this worker against an untrusted public repository, fork code, or unknown contributors. Anyone allowed to push workflow code can execute code on your computer. The supplied workflow intentionally does not run pull-request events. Avoid running the worker as root/Administrator. If your instructor requires a public repository, resolve runner security first; a GitHub-hosted runner and authenticated tunnel is an alternative architecture, **not configured in this project**.
+The workflow installs Python through `actions/setup-python`; this standard-library project
+does not need Flask or any other package installation. The portal terminal is needed to show
+the web app but is not required by the tests.
 
 ## 6. Demonstrate pass, fail, and fix
 
@@ -160,7 +159,10 @@ git push
 
 **Wait for each run to finish and capture its evidence before the next push.** In the broken run, the invalid-URL test must fail, the test step must be red, and the receiver must still receive the failing JSON. After the fix, the test step and report return to passing. Do not leave the intentional defect in your final submission.
 
-The pipeline delivers the report with `if: always()` after the test step. That means a normal test failure does not skip report delivery. An interrupted/cancelled runner, unavailable receiver, or powered-off computer cannot guarantee delivery; keep both programs running. The sender fails visibly if delivery fails instead of hiding the problem.
+The pipeline uploads the report with `if: always()` and runs the `send-email` job with
+`if: always()`, so a normal test failure does not skip report delivery. An unavailable
+receiver or tunnel cannot guarantee delivery; keep both services running. The sender fails
+visibly if delivery fails instead of hiding the problem.
 
 ## 7. Optional bonus: GitHub Pages
 
@@ -172,7 +174,9 @@ The main app has a Python backend and SQLite. **GitHub Pages cannot run them.** 
 4. Push a passing revision to `main`.
 5. Open the `github-pages` deployment/environment to find the actual published URL.
 
-Without this variable, the bonus job is skipped and the core project still works. Publishing runs only after the same revision's core CI job succeeds and only for a push to `main`. A failing test skips deployment, leaving the previous published version unchanged. Delivery/email failures also prevent publication, which is stricter than the required test-only gate.
+The `deploy-pages` job is optional and runs only when `ENABLE_PAGES=true`, the push is to
+`main`, and the test/report/email jobs succeed. A failed test or report delivery therefore
+leaves the previously deployed version unchanged.
 
 ## 8. Optional bonus: email reports
 
@@ -195,7 +199,7 @@ No live emails have been sent and no credentials are supplied with the project.
 
 | Symptom | Check |
 |---|---|
-| Workflow stays queued | Local worker is running, online, and labelled `labmid`. |
+| Report delivery fails | Check the tunnel, receiver health, `REPORT_RECEIVER_URL`, and matching token. |
 | Report connection refused | Receiver is running on the same machine/environment as the worker, on port 9000. |
 | Receiver rejects authentication | `LOCAL_REPORT_TOKEN` equals the receiver's `REPORT_TOKEN`. |
 | No report after failed test | The send step ran with `always()`; inspect its output, receiver health, and output-directory permissions. |

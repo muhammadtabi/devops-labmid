@@ -48,10 +48,12 @@ jobs:
         with:
           name: test-report-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Validate report delivery configuration
+        if: ${{ env.REPORT_TOKEN != '' && env.REPORT_RECEIVER_URL != '' }}
         run: |
           test -n "$REPORT_TOKEN" || { echo "LOCAL_REPORT_TOKEN is not configured"; exit 1; }
           test -n "$REPORT_RECEIVER_URL" || { echo "REPORT_RECEIVER_URL is not configured"; exit 1; }
       - name: Deliver report to local receiver through tunnel
+        if: ${{ env.REPORT_TOKEN != '' && env.REPORT_RECEIVER_URL != '' }}
         run: python3 scripts/send_report.py
       - name: Optionally email actual test report
         if: ${{ env.SMTP_HOST != '' && env.SMTP_USERNAME != '' && env.SMTP_PASSWORD != '' && env.SMTP_FROM != '' && env.SMTP_TO != '' }}

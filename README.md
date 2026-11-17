@@ -171,7 +171,7 @@ The main app has a Python backend and SQLite. **GitHub Pages cannot run them.** 
 1. Confirm your repository/account plan supports GitHub Pages for your repository visibility. Private repositories may require a paid plan; do not make a self-hosted-runner repository public casually.
 2. Open **Settings → Pages** and choose **GitHub Actions** as the source.
 3. In **Settings → Secrets and variables → Actions → Variables**, add `ENABLE_PAGES` with value `true`.
-4. Push a passing revision to `main`.
+4. Push a passing revision to `main`, or manually run the workflow for the `main` branch.
 5. Open the `github-pages` deployment/environment to find the actual published URL.
 
 The `deploy-pages` job is optional and runs only when `ENABLE_PAGES=true`, the push is to

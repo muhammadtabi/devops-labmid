@@ -10,6 +10,7 @@ import sqlite3
 from urllib.parse import urlsplit
 
 from http_support import JSONHandler, RequestError
+from submission_notifications import send_submission_confirmation
 from validation import validate_submission
 
 ROOT = Path(__file__).resolve().parent
@@ -27,12 +28,16 @@ def initialize_database(path):
                 CREATE TABLE IF NOT EXISTS submissions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT NOT NULL,
+                    email TEXT NOT NULL DEFAULT '',
                     registration_number TEXT NOT NULL,
                     assignment_title TEXT NOT NULL,
                     submission_url TEXT NOT NULL,
                     submitted_at TEXT NOT NULL
                 )
             """)
+            columns = {row[1] for row in connection.execute("PRAGMA table_info(submissions)").fetchall()}
+            if "email" not in columns:
+                connection.execute("ALTER TABLE submissions ADD COLUMN email TEXT NOT NULL DEFAULT ''")
     return path
 
 
@@ -83,11 +88,13 @@ class PortalHandler(JSONHandler):
             with closing(sqlite3.connect(self.server.db_path, timeout=10)) as connection:
                 with connection:
                     cursor = connection.execute(
-                        "INSERT INTO submissions (name, registration_number, assignment_title, submission_url, submitted_at) VALUES (?, ?, ?, ?, ?)",
-                        (*[cleaned[field] for field in ("name", "registration_number", "assignment_title", "submission_url")], submitted_at),
+                        "INSERT INTO submissions (name, email, registration_number, assignment_title, submission_url, submitted_at) VALUES (?, ?, ?, ?, ?, ?)",
+                        (*[cleaned[field] for field in ("name", "email", "registration_number", "assignment_title", "submission_url")], submitted_at),
                     )
                     submission_id = cursor.lastrowid
-            self.send_json(201, {"submission": {"id": submission_id, **cleaned, "submitted_at": submitted_at}})
+            submission = {"id": submission_id, **cleaned, "submitted_at": submitted_at}
+            email_status = send_submission_confirmation(submission)
+            self.send_json(201, {"submission": submission, "email_status": email_status})
         except sqlite3.Error:
             self.send_json(503, {"error": "Could not save your submission. Please try again."})
 

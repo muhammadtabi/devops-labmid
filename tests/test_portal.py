@@ -1,6 +1,7 @@
 import http.client
 import json
 from pathlib import Path
+import sqlite3
 import tempfile
 import threading
 import unittest
@@ -10,6 +11,7 @@ from validation import FIELD_LIMITS, validate_submission_url
 
 VALID_SUBMISSION = {
     "name": "Ada Lovelace",
+    "email": "ada.lovelace@gmail.com",
     "registration_number": "REG-101",
     "assignment_title": "DevOps Lab",
     "submission_url": "https://example.com/assignment?version=1",
@@ -78,6 +80,18 @@ class PortalTests(unittest.TestCase):
         self.assertIn("Registration number is required", json.loads(data)["errors"]["registration_number"])
         self.assertEqual(json.loads(self.request("GET")[1])["submissions"], [])
 
+    def test_missing_and_invalid_email_are_rejected(self):
+        for value in (None, "", "   ", "plainaddress", "@gmail.com", "name@", "name@localhost",
+                      "name@-gmail.com", "name@google..com", ".name@gmail.com", "name..part@gmail.com",
+                      "name@example.com\nBcc:other@example.com", "name gmail@gmail.com", 42):
+            with self.subTest(email=value):
+                status, data, _ = self.request("POST", payload={**VALID_SUBMISSION, "email": value})
+                self.assertEqual(status, 400)
+                self.assertIn("email", json.loads(data)["errors"])
+        payload = dict(VALID_SUBMISSION)
+        del payload["email"]
+        self.assertEqual(self.request("POST", payload=payload)[0], 400)
+
     def test_invalid_url_is_rejected(self):
         for value in ("not-a-url", "javascript:alert(1)", "ftp://example.com/file", "/relative", "https://", "https://user:password@example.com", "https://example.com:70000", "https://exa mple.com", "https://example.com\\evil", "http://127.1", "https://bad_host.example", "https://example.com:"):
             with self.subTest(url=value):
@@ -98,6 +112,29 @@ class PortalTests(unittest.TestCase):
         self.stop_server()
         self.start_server()
         self.assertEqual(len(json.loads(self.request("GET")[1])["submissions"]), 1)
+
+    def test_existing_database_is_migrated_with_empty_email(self):
+        self.stop_server()
+        with sqlite3.connect(self.db_path) as connection:
+            connection.execute("DROP TABLE submissions")
+            connection.execute("""
+                CREATE TABLE submissions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    registration_number TEXT NOT NULL,
+                    assignment_title TEXT NOT NULL,
+                    submission_url TEXT NOT NULL,
+                    submitted_at TEXT NOT NULL
+                )
+            """)
+            connection.execute(
+                "INSERT INTO submissions (name, registration_number, assignment_title, submission_url, submitted_at) VALUES (?, ?, ?, ?, ?)",
+                ("Existing Student", "REG-OLD", "Old Assignment", "https://example.com/old", "2026-11-18T10:00:00Z"),
+            )
+        self.start_server()
+        submissions = json.loads(self.request("GET")[1])["submissions"]
+        self.assertEqual(len(submissions), 1)
+        self.assertEqual(submissions[0]["email"], "")
 
     def test_multiple_submissions_order_and_trim(self):
         self.request("POST", payload=VALID_SUBMISSION)

@@ -2,6 +2,7 @@
 
 const fields = {
   name: ["Name", 120],
+  email: ["Email address", 254],
   registration_number: ["Registration number", 80],
   assignment_title: ["Assignment title", 200],
   submission_url: ["Submission URL", 2048],
@@ -48,6 +49,16 @@ function validate(payload) {
     if (typeof value !== "string" || !value.trim()) errors[field] = `${label} is required and must be text.`;
     else if (value.length > limit) errors[field] = `${label} must be at most ${limit} characters.`;
     else if (/[\u0000-\u001f\u007f]/u.test(value)) errors[field] = `${label} must not contain control characters.`;
+  }
+  if (!errors.email) {
+    const email = payload.email;
+    const match = /^([^@\s]+)@([^@\s]+)$/.exec(email);
+    if (!match || match[1].length > 64 || email.length > 254 ||
+        match[1].startsWith(".") || match[1].endsWith(".") || match[1].includes("..") ||
+        !/^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+$/i.test(match[1]) ||
+        !/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(match[2])) {
+      errors.email = "Email address must be a valid address such as name@gmail.com.";
+    }
   }
   if (!errors.submission_url && !isHttpURL(payload.submission_url)) errors.submission_url = urlError;
   return errors;
@@ -102,6 +113,7 @@ function renderSubmissions(submissions) {
     const item = document.createElement("li");
     item.append(textElement("h3", submission.assignment_title));
     item.append(textElement("p", `${submission.name} · ${submission.registration_number}`));
+    item.append(textElement("p", submission.email));
     if (isHttpURL(submission.submission_url)) {
       const link = textElement("a", submission.submission_url);
       link.href = submission.submission_url;
@@ -152,11 +164,22 @@ form.addEventListener("submit", async event => {
       try { localStorage.setItem(storageKey, JSON.stringify(submissions)); }
       catch { throw new Error("Could not save browser demo data. Storage may be disabled or full."); }
     } else {
-      await requestJSON("api/submissions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const result = await requestJSON("api/submissions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      formStatus.textContent = result.email_status === "sent"
+        ? "Submission saved; confirmation email sent."
+        : result.email_status === "failed"
+          ? "Submission saved; confirmation email failed to send."
+          : "Submission saved; confirmation email was not configured.";
+      form.reset();
+      showErrors({});
+      await loadSubmissions();
+      return;
     }
     form.reset();
     showErrors({});
-    formStatus.textContent = mode === "static-demo" ? "Saved only in this browser's local storage." : "Submission saved durably in SQLite.";
+    formStatus.textContent = mode === "static-demo"
+      ? "Saved only in this browser's local storage. No confirmation email is sent by the static demo."
+      : "Submission saved durably in SQLite.";
     await loadSubmissions();
   } catch (error) {
     if (error.fieldErrors) showErrors(error.fieldErrors);
@@ -174,7 +197,7 @@ async function initialize() {
     if (!["server", "static-demo"].includes(config.mode)) throw new Error("Unknown portal mode; refusing to guess where data will be saved.");
     mode = config.mode;
     document.getElementById("mode-label").textContent = mode === "static-demo"
-      ? "STATIC DEMO — saved in this browser only (localStorage). No Python server, SQLite, shared submissions, or CI receiver is hosted here."
+      ? "STATIC DEMO — saved in this browser only (localStorage). No real email confirmation is sent; this demo has no Python server, SQLite, shared submissions, or CI receiver."
       : "LOCAL SERVER — submissions are saved durably in SQLite on this machine.";
     submitButton.disabled = false;
     await loadSubmissions();

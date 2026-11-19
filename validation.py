@@ -6,17 +6,38 @@ from urllib.parse import urlsplit
 
 FIELD_LIMITS = {
     "name": 120,
+    "email": 254,
     "registration_number": 80,
     "assignment_title": 200,
     "submission_url": 2048,
 }
 FIELD_LABELS = {
     "name": "Name",
+    "email": "Email address",
     "registration_number": "Registration number",
     "assignment_title": "Assignment title",
     "submission_url": "Submission URL",
 }
 URL_ERROR = "Submission URL must be a valid HTTP or HTTPS URL without credentials."
+EMAIL_ERROR = "Email address must be a valid address such as name@gmail.com."
+
+
+def validate_email(value):
+    if len(value) > 254 or any(ord(character) < 32 or ord(character) == 127 for character in value):
+        return False
+    if value.count("@") != 1:
+        return False
+    local, domain = value.rsplit("@", 1)
+    if not local or len(local) > 64 or local.startswith(".") or local.endswith(".") or ".." in local:
+        return False
+    if not re.fullmatch(r"[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+", local):
+        return False
+    if len(domain) > 253 or domain.startswith(".") or domain.endswith("."):
+        return False
+    labels = domain.split(".")
+    if len(labels) < 2:
+        return False
+    return all(re.fullmatch(r"[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?", label) for label in labels)
 
 
 def _is_http_url(value):
@@ -74,4 +95,7 @@ def validate_submission(payload):
     if "submission_url" in cleaned and "submission_url" not in errors:
         if not validate_submission_url(cleaned["submission_url"]):
             errors["submission_url"] = URL_ERROR
+    if "email" in cleaned and "email" not in errors:
+        if not validate_email(cleaned["email"]):
+            errors["email"] = EMAIL_ERROR
     return cleaned, errors

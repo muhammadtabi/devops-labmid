@@ -8,8 +8,8 @@ A small assignment-submission portal with real automated tests, a GitHub Actions
 
 ## What you get
 
-- Student name, registration number, assignment title, and submission-link form.
-- Server-side required-field and HTTP/HTTPS URL validation.
+- Student name, email address, registration number, assignment title, and submission-link form.
+- Server-side required-field, email, and HTTP/HTTPS URL validation.
 - SQLite persistence and a saved-submissions list. No file upload required.
 - Real Python `unittest` results in JSON; failed tests return a failing exit code.
 - Authenticated local report receiver, automatic delivery after passing **and failing** runs.
@@ -27,7 +27,7 @@ python3 --version
 python3 server.py
 ```
 
-Open **http://127.0.0.1:8000**. Enter a name, registration number, assignment title, and a URL such as `https://example.com/assignment1`. Saved entries go into `data/submissions.db` and remain after restarting the application. Press Ctrl+C to stop.
+Open **http://127.0.0.1:8000**. Enter a name, email address, registration number, assignment title, and a URL such as `https://example.com/assignment1`. Saved entries go into `data/submissions.db` and remain after restarting the application. Press Ctrl+C to stop.
 
 On Windows, use `py -3` in place of `python3` for local commands if necessary. The supplied CI file expects a Linux/macOS runner with the command `python3` available.
 
@@ -179,6 +179,30 @@ The `deploy-pages` job is optional and runs only when `ENABLE_PAGES=true`, the p
 leaves the previously deployed version unchanged.
 
 ## 8. Optional bonus: email reports
+
+There are two separate email features:
+
+1. **Direct submission confirmation**: after the portal accepts and saves a submission, it sends
+   one confirmation to the submitted email address. Configure these environment variables when
+   starting `server.py`; `SMTP_TO` is not used for this feature.
+2. **GitHub workflow test-report email**: the existing CI report job sends the generated
+   `test-report.json` to a configured `SMTP_TO` address. It is separate from direct confirmations.
+
+For Gmail, enable two-step verification and create a Gmail **App Password**. The normal account
+password is not the SMTP password.
+
+```bash
+export SMTP_HOST="smtp.gmail.com"
+export SMTP_PORT="587"          # 587 for STARTTLS; 465 also supported
+export SMTP_USERNAME="you@gmail.com"
+export SMTP_PASSWORD="your-16-character-app-password"
+export SMTP_FROM="you@gmail.com"
+python3 server.py
+```
+
+Only the first four SMTP settings plus `SMTP_PORT` are read by the portal confirmation feature.
+The static GitHub Pages demo cannot access server environment variables or send real email; it
+clearly reports that confirmations are unavailable in browser-local demo mode.
 
 Configure your email provider's SMTP settings in **GitHub Actions secrets**:
 
